@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pasar Pintar Kedungadem</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+        
+        body {
+            font-family: 'Comic Neue', cursive, Arial, sans-serif;
+            background-color: #f4f1de;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #3d405b;
+        }
+        #game-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            min-height: 80vh;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        h1, h2 { color: #e07a5f; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .active { display: flex; }
+        
+        button {
+            background-color: #81b29a;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            margin: 10px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #5f8c75;
+            transition: transform 0.1s, box-shadow 0.1s;
+            width: 90%;
+        }
+        button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+        .btn-kasir { background-color: #f2cc8f; box-shadow: 0 5px 0 #d9ab65; color: #3d405b;}
+        .btn-map { font-size: 24px; padding: 20px; margin: 10px; width: 45%; display: inline-block;}
+        
+        .dialog-box {
+            background-color: #f4f1de;
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px dashed #e07a5f;
+            margin-bottom: 20px;
+            width: 90%;
+            font-size: 18px;
+        }
+        .emoji-large { font-size: 80px; margin: 10px 0; }
+        .info-box { background: #e07a5f; color: white; padding: 15px; border-radius: 10px; text-align: left; }
+        input[type="number"] {
+            padding: 10px; font-size: 20px; border-radius: 10px; border: 2px solid #81b29a; width: 50%; text-align: center; margin-bottom: 10px;
+        }
+        #eval-list { text-align: left; background: #fdf8e1; padding: 15px; border-radius: 10px; max-height: 300px; overflow-y: auto;}
+        .correct { color: #2a9d8f; font-weight: bold; }
+        .wrong { color: #e76f51; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <!-- MAIN MENU -->
+    <div id="screen-menu" class="screen active">
+        <h1>🏪 Pasar Pintar Kedungadem</h1>
+        <p>Ayo belajar Matematika, Bahasa Indonesia, dan IPAS di pasar!</p>
+        <div class="emoji-large">🛒</div>
+        <h3>Pilih Peranmu:</h3>
+        <button onclick="startRole('pembeli')">🚶‍♂️ Jadi Pembeli (B. Indo & IPAS)</button>
+        <button class="btn-kasir" onclick="startRole('kasir')">🧑‍🍳 Jadi Kasir (Matematika)</button>
+    </div>
+
+    <!-- PEMBELI: KNOWLEDGE BASE -->
+    <div id="screen-knowledge" class="screen">
+        <h2>📚 Buku Catatan Ibu</h2>
+        <div class="info-box">
+            <p><b>Tips Belanja (IPAS):</b></p>
+            <ul>
+                <li><b>Zona Hijau:</b> Sayuran dan Buah-buahan 🥬🍎</li>
+                <li><b>Zona Protein:</b> Daging, Ikan, Tahu, Tempe 🐟🍗</li>
+                <li><b>Zona Kelontong:</b> Beras, Minyak, Gula 🍚</li>
+            </ul>
+            <p><b>Tips Berbicara (B. Indo):</b></p>
+            <ul>
+                <li>Gunakan kata "Permisi", "Tolong", dan "Terima Kasih".</li>
+            </ul>
+        </div>
+        <button onclick="nextPembeliStage()">Mulai Belanja!</button>
+    </div>
+
+    <!-- PEMBELI: GAMEPLAY -->
+    <div id="screen-pembeli" class="screen">
+        <h2 id="pembeli-title">Tantangan Belanja</h2>
+        <div class="emoji-large" id="pembeli-emoji">📝</div>
+        <div class="dialog-box" id="pembeli-dialog">Ibu memintamu membeli sesuatu.</div>
+        <div id="pembeli-options"></div>
+    </div>
+
+    <!-- KASIR: GAMEPLAY -->
+    <div id="screen-kasir" class="screen">
+        <h2 id="kasir-title">Level 1: Penjumlahan</h2>
+        <div class="emoji-large" id="kasir-emoji">🧑‍🍳</div>
+        <div class="dialog-box" id="kasir-dialog">Pelanggan datang membeli barang.</div>
+        <input type="number" id="kasir-input" placeholder="Ketik angka..." style="display:none;">
+        <div id="kasir-options"></div>
+        <button id="kasir-submit" style="display:none;" onclick="checkKasirAnswer()">Jawab!</button>
+    </div>
+
+    <!-- EVALUASI (RAPOR) -->
+    <div id="screen-eval" class="screen">
+        <h2>📜 Rapor Evaluasi</h2>
+        <div class="emoji-large">🎓</div>
+        <p>Permainan Selesai! Berikut adalah catatan belajarmu:</p>
+        <div id="eval-list"></div>
+        <button onclick="location.reload()">Main Lagi 🔄</button>
+    </div>
+
+</div>
+
+<script>
+    // DATA PEMBELI (IPAS & B. INDONESIA)
+    const pembeliStages = [
+        {
+            type: 'ipas',
+            question: "Ibu memintamu membeli 'Ikan Lele'. Ke zona mana kamu harus pergi?",
+            options: [
+                { text: "🥬 Zona Hijau", correct: false, reason: "Ikan adalah sumber protein, bukan sayuran." },
+                { text: "🐟 Zona Protein", correct: true, reason: "Tepat! Ikan adalah sumber protein hewani." },
+                { text: "🍚 Zona Kelontong", correct: false, reason: "Kelontong untuk barang kebutuhan pokok seperti beras." }
+            ]
+        },
+        {
+            type: 'bindo',
+            question: "Kamu sudah sampai di penjual ikan. Bagaimana cara bertanya yang sopan?",
+            options: [
+                { text: "Pak, lelenya berapaan? Buruan!", correct: false, reason: "Kata 'Buruan' kurang sopan untuk diucapkan." },
+                { text: "Permisi Pak, apakah ikan lelenya ada? Berapa harganya?", correct: true, reason: "Tepat! Menggunakan kata 'Permisi' sangat sopan." }
+            ]
+        },
+        {
+            type: 'ipas',
+            question: "Sekarang ibu minta dibelikan sayur Bayam yang sehat. Yang mana yang kamu pilih?",
+            options: [
+                { text: "Bayam yang daunnya hijau segar", correct: true, reason: "Benar! Daun segar tanda sayur masih baik dikonsumsi." },
+                { text: "Bayam yang layu dan menguning", correct: false, reason: "Sayur layu sudah tidak segar dan nutrisinya berkurang." }
+            ]
+        }
+    ];
+
+    // DATA KASIR (MATEMATIKA)
+    const kasirStages = [
+        // Level 1: Penjumlahan
+        { level: "Level 1: Penjumlahan", emoji: "🍅", q: "Tomat Rp 3.000 + Wortel Rp 4.000. Berapa totalnya?", ans: 7000 },
+        { level: "Level 1: Penjumlahan", emoji: "🐟", q: "Ikan Rp 12.000 + Tempe Rp 3.000. Berapa totalnya?", ans: 15000 },
+        // Level 2: Pengurangan / Diskon
+        { level: "Level 2: Diskon", emoji: "🏷️", q: "Total belanja Rp 20.000. Bapak ini dapat Diskon Rp 5.000. Berapa yang harus dibayar?", ans: 15000 },
+        { level: "Level 2: Diskon", emoji: "🏷️", q: "Total belanja Rp 15.000. Ibu ini dapat Diskon Rp 3.000. Berapa bayarnya?", ans: 12000 },
+        // Level 3: Kembalian (Penjumlahan + Pengurangan)
+        { level: "Level 3: Kembalian", emoji: "💵", q: "Belanja: Bayam Rp 5.000. Pembeli bayar pakai uang Rp 10.000. Berapa KEMBALIANNYA?", ans: 5000 },
+        { level: "Level 3: Ujian Akhir", emoji: "👑", q: "Belanja Gula Rp 10.000 & Teh Rp 5.000. Pembeli bayar pakai uang Rp 20.000. Berapa KEMBALIANNYA?", ans: 5000 }
+    ];
+
+    let currentStage = 0;
+    let evalNotes = []; // Menyimpan catatan benar/salah
+
+    // Navigasi Layar
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function startRole(role) {
+        currentStage = 0;
+        evalNotes = [];
+        if (role === 'pembeli') {
+            showScreen('screen-knowledge');
+        } else if (role === 'kasir') {
+            showScreen('screen-kasir');
+            loadKasirStage();
+        }
+    }
+
+    // --- LOGIKA PEMBELI ---
+    function nextPembeliStage() {
+        if (currentStage >= pembeliStages.length) {
+            showEvaluation();
+            return;
+        }
+        showScreen('screen-pembeli');
+        const stageData = pembeliStages[currentStage];
+        document.getElementById('pembeli-title').innerText = stageData.type === 'ipas' ? "Tantangan IPAS" : "Tantangan B. Indonesia";
+        document.getElementById('pembeli-emoji').innerText = stageData.type === 'ipas' ? "🧭" : "🗣️";
+        document.getElementById('pembeli-dialog').innerText = stageData.question;
+        
+        const optionsDiv = document.getElementById('pembeli-options');
+        optionsDiv.innerHTML = '';
+        
+        stageData.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.innerText = opt.text;
+            btn.onclick = () => handlePembeliAnswer(opt.correct, opt.text, stageData.question, opt.reason);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function handlePembeliAnswer(isCorrect, answerText, questionText, reason) {
+        if (isCorrect) {
+            evalNotes.push(`<span class='correct'>✅ Benar:</span> Pada pertanyaan "${questionText}", jawabanmu "${answerText}" tepat! ${reason}`);
+        } else {
+            evalNotes.push(`<span class='wrong'>❌ Salah:</span> Pada pertanyaan "${questionText}", kamu memilih "${answerText}". <b>Koreksi:</b> ${reason}`);
+        }
+        currentStage++;
+        nextPembeliStage();
+    }
+
+    // --- LOGIKA KASIR ---
+    function loadKasirStage() {
+        if (currentStage >= kasirStages.length) {
+            showEvaluation();
+            return;
+        }
+        const stageData = kasirStages[currentStage];
+        document.getElementById('kasir-title').innerText = stageData.level;
+        document.getElementById('kasir-emoji').innerText = stageData.emoji;
+        document.getElementById('kasir-dialog').innerText = stageData.q;
+        
+        const input = document.getElementById('kasir-input');
+        input.style.display = 'inline-block';
+        input.value = '';
+        document.getElementById('kasir-submit').style.display = 'inline-block';
+    }
+
+    function checkKasirAnswer() {
+        const stageData = kasirStages[currentStage];
+        const userAnswer = parseInt(document.getElementById('kasir-input').value);
+        
+        if (isNaN(userAnswer)) {
+            alert("Ketik angkanya dulu ya!");
+            return;
+        }
+
+        if (userAnswer === stageData.ans) {
+            evalNotes.push(`<span class='correct'>✅ Benar:</span> [${stageData.level}] Kamu berhasil menghitung: "${stageData.q}" Jawabannya tepat Rp ${stageData.ans}`);
+        } else {
+            evalNotes.push(`<span class='wrong'>❌ Salah Hitung:</span> [${stageData.level}] "${stageData.q}". Jawabanmu: Rp ${userAnswer}. <b>Seharusnya: Rp ${stageData.ans}</b>`);
+        }
+        currentStage++;
+        loadKasirStage();
+    }
+
+    // --- EVALUASI ---
+    function showEvaluation() {
+        showScreen('screen-eval');
+        const evalDiv = document.getElementById('eval-list');
+        evalDiv.innerHTML = '';
+        
+        if (evalNotes.length === 0) {
+            evalDiv.innerHTML = "<p>Tidak ada catatan.</p>";
+        } else {
+            evalNotes.forEach(note => {
+                const p = document.createElement('p');
+                p.innerHTML = note;
+                p.style.borderBottom = "1px solid #ddd";
+                p.style.paddingBottom = "10px";
+                evalDiv.appendChild(p);
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
